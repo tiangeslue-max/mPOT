@@ -1,0 +1,73 @@
+# Zielverteilung: unnormierte Dichte f(x,y)
+f <- function(x, y) {
+  exp( max(x, y) + x + y - exp(-x) - exp(-y) )
+}
+
+# Vorschlagsverteilung: uniforme Dichte auf [-2,2]^2
+g <- function(x, y) {
+  if(x >= -2 && x <= 2 && y >= -2 && y <= 2) {
+    return(1/16)
+  } else {
+    return(0)
+  }
+}
+
+# Konstante M, sodass f(x,y) <= M * g(x,y) in D, hier M ca. 5000
+M <- 5000
+
+# Anzahl der benötigten akzeptierten Stichproben
+n <- 1000
+iteration <- 0
+
+# Speicher für die Stichproben
+samples <- matrix(NA, ncol = 2, nrow = n)
+
+set.seed(123)
+count <- 0
+while(count < n) {
+  iteration <- iteration +1
+  # Ziehe x und y gleichverteilt aus [-2,2]
+  x_candidate <- runif(1, min = -2, max = 2)
+  y_candidate <- runif(1, min = -2, max = 2)
+  
+  # Ziehe eine uniforme Zufallszahl u aus [0,1]
+  u <- runif(1)
+  
+  # Akzeptanzbedingung: u <= f(x,y) / (M * g(x,y))
+  # Da g(x,y)=1/16 in D, entspricht das u <= 16*f(x,y)/M
+  if(u <= 16 * f(x_candidate, y_candidate) / M) {
+    count <- count + 1
+    samples[count, ] <- c(x_candidate, y_candidate)
+  }
+}
+
+# Ergebnisse plotten
+plot(samples[,1], samples[,2],
+     xlab = "x", ylab = "y",
+     main = "Rejection Sampling: Stichproben aus f(x,y)",
+     pch = 16, col = rgb(0,0,1,0.5))
+
+T<- samples
+
+E <- rexp(n, 1) #nx1 matrix bzw vektor 
+maxT <- apply(T, 1, max) # hier: maxT gibt das maximum jeder zeile dh nx1 vektor,nur max(T) gibt maximum der gesamten matrix, 
+# dimensionen anpassen:
+E_alsmatrix <- matrix(E, ncol = 2, nrow = n, byrow = FALSE)
+maxT_alsmatrix <- matrix(maxT, ncol = 2, nrow = n, byrow = FALSE)
+
+X_0 <- E_alsmatrix + T - maxT_alsmatrix
+
+# Plot als Streudiagramm  die erste Spalte (X_0[, 1]) die x-Achse und die zweite Spalte (X_0[, 2]) die y-Achse ist.
+plot(X_0[, 1], X_0[, 2],
+     xlab = expression(X[1]),
+     ylab = expression(X[2]),
+     main = "GP-Vektor mit RS",
+     xlim = c(-2, 10),
+     ylim = c(-2, 10),
+     col = "black",
+     pch = 19,
+     cex = 0.5)
+
+
+
+
